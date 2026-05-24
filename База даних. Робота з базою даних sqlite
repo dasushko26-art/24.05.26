@@ -1,0 +1,31 @@
+import tkinter as tk
+import requests
+
+url = "https://bank.gov.ua/NBUStatService/v1/statistictxt/exchange?valcode=USD&json"
+data = requests.get(url).json()
+usd_rate = data[0]["rate"]
+
+def convert(uah_amount):
+    return uah_amount / usd_rate
+
+print(f"Поточний курс: 1 USD = {usd_rate} UAH")
+uah_input = float(input("Введіть суму в гривнях (консоль): "))
+print(f"Сума в доларах: {convert(uah_input):.2f} USD\n")
+
+def on_click():
+    uah = float(entry.get())
+    result_label.config(text=f"Сума в USD: ${convert(uah):.2f}")
+
+root = tk.Tk()
+root.title("Конвертер")
+root.geometry("250x150")
+
+tk.Label(root, text=f"Курс: {usd_rate:.2f} грн").pack()
+entry = tk.Entry(root)
+entry.pack()
+
+tk.Button(root, text="Конвертувати", command=on_click).pack()
+result_label = tk.Label(root, text="Сума в USD: $0.00")
+result_label.pack()
+
+root.mainloop()
