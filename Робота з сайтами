@@ -1,0 +1,58 @@
+import csv
+import subprocess
+import sys
+
+try:
+    import requests
+    from bs4 import BeautifulSoup
+except ImportError:
+    print(
+        "Потрібні бібліотеки не знайдені. Встановлюю requests та beautifulsoup4..."
+    )
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "requests", "beautifulsoup4"]
+    )
+    import requests
+    from bs4 import BeautifulSoup
+
+URL = "http://books.toscrape.com/"
+
+try:
+    response = requests.get(URL)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, "html.parser")
+        books = soup.find_all("article", class_="product_pod")
+
+        parsed_books = []
+        print("Починаємо збір даних про книги...\n")
+
+        for book in books:
+            title = book.h3.a["title"]
+            price = book.find("p", class_="price_color").text
+            availability = book.find(
+                "p", class_="instock availability"
+            ).text.strip()
+
+            parsed_books.append(
+                {"Назва": title, "Ціна": price, "Наявність": availability}
+            )
+            print(f"Книга: {title} | Ціна: {price} | Статус: {availability}")
+
+        with open(
+            "books_data.csv", mode="w", encoding="utf-8", newline=""
+        ) as file:
+            writer = csv.DictWriter(
+                file, fieldnames=["Назва", "Ціна", "Наявність"]
+            )
+            writer.writeheader()
+            writer.writerows(parsed_books)
+
+        print("\nДані успішно збережено у файл 'books_data.csv'!")
+    else:
+        print(
+            f"Не вдалося підключитися до сайту. Код відповіді: {response.status_code}"
+        )
+
+except Exception as e:
+    print(f"Виникла помилка під час виконання програми: {e}")
